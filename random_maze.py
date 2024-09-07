@@ -1,20 +1,16 @@
 import random
-import matplotlib.pyplot as plt
 import numpy as np
 
-# Set maze dimensions (width and height)
+# Set maze dimensions
 mx = 20  # Maze width
 my = 20  # Maze height
 
 # Initialize the maze with all cells set to 0 (unvisited)
 maze = [[0 for x in range(mx)] for y in range(my)]
 
-# Define movement directions: [right, down, left, up]
+# Define movement directions: [up, right, down, left]
 dx = [0, 1, 0, -1]
 dy = [-1, 0, 1, 0]
-
-# Color representation for the maze (black and white in RGB)
-color = [(0, 0, 0), (255, 255, 255)]
 
 # Start the maze generation from a random cell
 cx = random.randint(0, mx - 1)  # Random starting x-coordinate
@@ -24,7 +20,6 @@ stack = [(cx, cy, 0)]  # Stack to hold the position and direction
 
 # Depth-first search (DFS) based maze generation
 while len(stack) > 0:
-    # Get current position and direction from the top of the stack
     (cx, cy, cd) = stack[-1]
 
     # Prevent frequent changes in direction to avoid zigzag paths
@@ -73,7 +68,54 @@ maze = abs(maze)
 
 # Ensure the start and end points are clear (set them as paths)
 maze[0][0] = 0  # Start point
-maze[mx-1][my-1] = 0  # End point
+maze[mx - 1][my - 1] = 0  # End point
 
-# Save the generated maze to a file in NumPy format
-np.save('maze', np.array(maze))
+# Function to print the maze in the desired format
+def print_maze(maze, solved=False):
+    for y in range(len(maze)):
+        row = ""
+        for x in range(len(maze[y])):
+            if (y, x) == (0, 0):
+                row += "S"
+            elif (y, x) == (my-1, mx-1):
+                row += "E"
+            elif maze[y][x] == 1:
+                row += "%"
+            elif maze[y][x] == 2 and solved:
+                row += "*"
+            else:
+                row += " "
+        print(row)
+
+# Function to solve the maze using DFS
+def solve_maze(maze, x, y):
+    if x < 0 or y < 0 or x >= mx or y >= my or maze[y][x] != 0:
+        return False
+    if (x, y) == (mx - 1, my - 1):  # If reached the end
+        return True
+
+    maze[y][x] = 2  # Mark the path with 2 (temporary mark for solution)
+    
+    # Try moving in each direction: up, right, down, left
+    if solve_maze(maze, x + 1, y):  # Right
+        return True
+    if solve_maze(maze, x, y + 1):  # Down
+        return True
+    if solve_maze(maze, x - 1, y):  # Left
+        return True
+    if solve_maze(maze, x, y - 1):  # Up
+        return True
+
+    maze[y][x] = 0  # Unmark the cell if no solution was found
+    return False
+
+# Print the unsolved maze
+print("Unsolved maze:")
+print_maze(maze)
+
+# Solve the maze starting from (0, 0)
+solve_maze(maze, 0, 0)
+
+# Print the solved maze
+print("\nSolved maze:")
+print_maze(maze, solved=True)
